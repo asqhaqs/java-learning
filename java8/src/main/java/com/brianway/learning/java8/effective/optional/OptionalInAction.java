@@ -13,6 +13,7 @@ public class OptionalInAction {
     private static Map<String, Object> map = new HashMap<>();
 
     public static void main(String[] args) {
+        map.put("key", "xu");
         Optional<Object> value = getValue("key");
         System.out.println(value.orElse("this is null"));
 
