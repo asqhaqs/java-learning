@@ -8,7 +8,7 @@ package com.brianway.learning.java.multithread.communication.example1;
  * P134
  * 不使用等待/通知机制实现线程间通信
  *
- * 这里有可见性的问题，并不一定能看到线程b退出。
+ * 这里有可见性的问题，并不一定能看到线程b退出 添加 volatile 变量可避免。
  */
 public class Run1_TwoThreadTransData {
     public static void main(String[] args) {

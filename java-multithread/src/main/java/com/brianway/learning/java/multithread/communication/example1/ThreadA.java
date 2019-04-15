@@ -4,7 +4,7 @@ package com.brianway.learning.java.multithread.communication.example1;
  * Created by Brian on 2016/4/13.
  */
 public class ThreadA extends Thread {
-    private MyList list;
+    private volatile MyList list;
 
     public ThreadA(MyList list) {
         super();
