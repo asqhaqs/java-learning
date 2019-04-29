@@ -52,6 +52,7 @@
         <module>java-io</module>
         <module>java8</module>
         <module>java-jvm</module>
+        <module>algorithm-practise</module>
     </modules>
 
     <dependencyManagement>
