@@ -53,6 +53,7 @@
         <module>java8</module>
         <module>java-jvm</module>
         <module>algorithm-practise</module>
+        <module>kafkaConsumerForCount</module>
     </modules>
 
     <dependencyManagement>
