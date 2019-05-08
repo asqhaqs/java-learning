@@ -1,18 +1,21 @@
+import java.lang.reflect.Method;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 
 import coder.WebFlowLogGatherMsgBinCoder;
 import coder.WebFlowLogGatherMsgCoder;
+import com.google.protobuf.Message;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import soc.storm.situation.protocolbuffer.AddressBookProtosTDGYWA;
 import utils.AESUtil;
+import utils.JsonFormatProtocolBuffer;
+
+import org.apache.commons.lang3.StringUtils;
+import utils.JsonUtils;
 
 /**
  * Create by xudong
@@ -21,26 +24,45 @@ import utils.AESUtil;
  */
 public class KafkaConsumerManager implements Runnable{
 
-    private static final Logger logger = LoggerFactory.getLogger(KafkaConsumerManager.class);
 
     private final String topic;
 
     private KafkaConsumer<String, Object> consumer;
 
-    private  AESUtil aESUtil = null;
+    // 加密解密
+    private final static boolean isWebflowLogEncrypt = (SystemConstants.WEBFLOW_LOG_ENCRYPT.equals("true")) ? true : false;
+    private  static AESUtil aESUtil = null;
+
+    static {
+        aESUtil = new AESUtil();
+        aESUtil.init_aes(SystemConstants.FILE_PATH + "/decrypt.conf");
+    }
 
     // （2）sensor protocol
     private final static WebFlowLogGatherMsgCoder webFlowLogGatherMsgCoder = new WebFlowLogGatherMsgBinCoder();
+    private String topicMethod;// = "getSkyeyeTcpflow";
+    private Method getSkyeyeWebFlowLogObjectMethod;
+    private final static Class<?> skyeyeWebFlowLogClass = AddressBookProtosTDGYWA.SENSOR_LOG.class;
 
     private Integer logNumber = 0;
+    private Integer markedNumber = 0;
     private Date endtime;
 
-    public KafkaConsumerManager(String topic, String endtime){
-        logger.warn(String.format("[info: init KafkaConsumerManager[%s]]", topic));
+    private byte[] skyeyeWebFlowLogByteArrayElementBytesDest = null;
+
+    public KafkaConsumerManager(String topic, String method, String endtime){
+//        logger.warn(String.format("[info: init KafkaConsumerManager[%s]]", topic));
+        System.out.println(String.format("[info: init KafkaConsumerManager[%s]]", topic));
         this.topic = topic;
         this.consumer = new KafkaConsumer<String, Object>(createConsumerConfig());
-        aESUtil = new AESUtil();
-        aESUtil.init_aes(SystemConstants.FILE_PATH + "/decrypt.conf");
+        skyeyeWebFlowLogByteArrayElementBytesDest = new byte[Integer.parseInt(SystemConstants.WEBFLOW_LOG_ENCRYPT_BUFFER_SIZE)];// 61858764、10000
+        topicMethod = method;
+        try {
+            getSkyeyeWebFlowLogObjectMethod = skyeyeWebFlowLogClass.getMethod(topicMethod);
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        }
+
         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         try {
             this.endtime = df.parse(endtime);
@@ -50,13 +72,14 @@ public class KafkaConsumerManager implements Runnable{
     }
 
     public Integer showNumber(){
-        System.out.println("the logNumber of " + Thread.currentThread() + "is: " + this.logNumber);
+        System.out.println("the logNumber of topic " + this.topic + " before time " + this.endtime + " in "+ Thread.currentThread() + "is: " + this.logNumber);
+        System.out.println("the markedNumber is: " + this.markedNumber);
         return this.logNumber;
     }
 
 
     private static Properties createConsumerConfig(){
-         logger.info("init createConsumerConfig");
+         System.out.println("init createConsumerConfig");
          Properties properties = new Properties();
          properties.put("bootstrap.servers", SystemConstants.BROKER_URL);
          properties.put("group.id", SystemConstants.KAFKA_CONSUMER_TEST_ID_GYWA);
@@ -77,27 +100,76 @@ public class KafkaConsumerManager implements Runnable{
          return properties;
     }
 
+    public static byte[] subBytes(byte[] src, int begin, int count) {
+        byte[] bs = new byte[count];
+        System.arraycopy(src, begin, bs, 0, count);
+        return bs;
+    }
+
     public void run(){
         try{
             this.consumer.subscribe(Arrays.asList(topic));
             SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            System.out.println("consumer topic: " + topic +"start time is: " + df.format(new Date()));
             while (true) {
                 ConsumerRecords<String, Object> records = consumer.poll(100);
                 for(ConsumerRecord<String, Object> record : records){
-                    logger.debug("topic = %s, partition = %s, offset = %d", record.topic(), record.partition(),
-                            record.offset());
+
                     byte[] skyeyeWebFlowLogByteArray = (byte[]) record.value();
                     List<Object> pbBytesWebFlowLogList = webFlowLogGatherMsgCoder.fromWire(skyeyeWebFlowLogByteArray);
-                    this.logNumber += pbBytesWebFlowLogList.size();
+
+                    //统计 pb length
+                    if(SystemConstants.DEBUG.equals("true")){
+                        System.out.println("pbBytesWebFlowLogList length: " + pbBytesWebFlowLogList.size());
+                    }
+
+                    for(Object skyeyeWebFlowLogByteArrayElement : pbBytesWebFlowLogList){
+                        byte[] skyeyeWebFlowLogByteArrayElementBytes = (byte[]) skyeyeWebFlowLogByteArrayElement;
+
+                        // 加密解密
+                        if (isWebflowLogEncrypt) {
+                            int decryptBytesLength = aESUtil.decrypt(skyeyeWebFlowLogByteArrayElementBytes,
+                                    skyeyeWebFlowLogByteArrayElementBytes.length,
+                                    skyeyeWebFlowLogByteArrayElementBytesDest);
+
+                            if (decryptBytesLength < 0) {
+                                throw new RuntimeException("topic"+ this.topic +"AES decrpty error");
+                            }
+
+                            skyeyeWebFlowLogByteArrayElementBytes = subBytes(skyeyeWebFlowLogByteArrayElementBytesDest, 0, decryptBytesLength);
+                        }
+
+                        AddressBookProtosTDGYWA.SENSOR_LOG log = AddressBookProtosTDGYWA.SENSOR_LOG.parseFrom(skyeyeWebFlowLogByteArrayElementBytes);
+                        Object skyeyeWebFlowLogPB = getSkyeyeWebFlowLogObjectMethod.invoke(log);
+                        String skyeyeWebFlowLogStr = JsonFormatProtocolBuffer.printToString((Message) skyeyeWebFlowLogPB);
+
+                        // 查找统计相关的信息
+                        if (StringUtils.isNotBlank(skyeyeWebFlowLogStr)) {
+                            Map<String, Object> skyeyeWebFlowLog = JsonUtils.jsonToMap(skyeyeWebFlowLogStr);
+                            if (null != skyeyeWebFlowLog ) {
+                                this.logNumber++ ;
+                                if(SystemConstants.DEBUG.equals("true")){
+                                    System.out.println(skyeyeWebFlowLog.toString());
+                                    System.out.println(SystemConstants.MARKED_FIELD  +  "   " + SystemConstants.MARKED_VALUE);
+                                }
+                                if(skyeyeWebFlowLog.get(SystemConstants.MARKED_FIELD).toString().equals(SystemConstants.MARKED_VALUE)){
+                                    this.markedNumber++;
+                                }
+
+                            }
+                        }
+                    }
                 }
+                consumer.commitSync();
                 Date nowdate = new Date();
                 int va = nowdate.compareTo(endtime);
                 if(va > 0){
-                    System.out.println("end time is: " + df.format(nowdate));
+                    System.out.println("consumer topic: " + topic +"end time is: " + df.format(nowdate));
                     showNumber();
                     break;
                 }
             }
+            consumer.close();
         }catch (Exception e){
             e.printStackTrace();
         }

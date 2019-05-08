@@ -15,20 +15,20 @@ public class SystemConstants extends ConfigurableContants {
     static {
         logger.info("init");
         // init("/app.properties");
-        init("/home/storm/test/app.properties");
+        init("/home/storm/test/ceshi.properties");
     }
 
-    public static final String ZOOKEEPER_HOSTS = getProperty("zookeeper_hosts", "127.0.0.1:2181");
-    public static final String BROKER_URL = getProperty("broker_url", "127.0.0.1:9092");
+    public static final String ZOOKEEPER_HOSTS = getProperty("zookeeper_hosts", "m1.gycs.bigdata01.cn:2181,m2.gycs.bigdata01.cn:2181,m3.gycs.bigdata01.cn:2181");
+    public static final String BROKER_URL = getProperty("broker_url", "m4.gycs.bigdata01.cn:9092,m5.gycs.bigdata01.cn:9092,m7.gycs.bigdata01.cn:9092");
 
     public static final String KAFKA_SPOUT_THREADS = getProperty("kafka_spout_threads", "5");
 
     public static final String FILE_PATH = getProperty("file_path", "/home/storm/geoipdata");
     // debug
-    public static final String TOPOLOGY_DEBUG = getProperty("debug", "true");
+    public static final String DEBUG = getProperty("debug", "true");
 
     // encrypt
-    public static final String WEBFLOW_LOG_ENCRYPT = getProperty("encrypt", "false");
+    public static final String WEBFLOW_LOG_ENCRYPT = getProperty("encrypt", "true");
     public static final String WEBFLOW_LOG_ENCRYPT_BUFFER_SIZE = getProperty("encrypt_buffer_size", "100000");
 
     // nest record: Record--Array--Record
@@ -52,6 +52,13 @@ public class SystemConstants extends ConfigurableContants {
     // # auto.offset.reset String must be one of: latest, earliest
     public static final String KAFKA_CONSUMER_AUTO_OFFSET_RESET_GYWA3061 = getProperty("kafka_consumer_auto_offset_reset_gywa3061",
             "earliest");
+
+    public static final String METHOD = getProperty("topic_to_method","getSkyeyeIds");
+    public static final String END_TIME = getProperty("endtime", "2019-05-06 14:30:00");
+    public static final String TOPIC_COBSUMER = getProperty("topic_consumer", "td_skyeye_file");
+
+    public static final String MARKED_FIELD = getProperty("markedfield","rule_id");
+    public static final String MARKED_VALUE = getProperty("markedvalue","51206");
 
     public static void main(String[] args) {
         System.out.println("SystemConstants.KAFKA_SPOUT_THREADS: " + SystemConstants.KAFKA_SPOUT_THREADS);
