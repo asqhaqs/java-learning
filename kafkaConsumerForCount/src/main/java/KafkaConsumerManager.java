@@ -118,10 +118,6 @@ public class KafkaConsumerManager implements Runnable{
                     byte[] skyeyeWebFlowLogByteArray = (byte[]) record.value();
                     List<Object> pbBytesWebFlowLogList = webFlowLogGatherMsgCoder.fromWire(skyeyeWebFlowLogByteArray);
 
-                    //统计 pb length
-                    if(SystemConstants.DEBUG.equals("true")){
-                        System.out.println("pbBytesWebFlowLogList length: " + pbBytesWebFlowLogList.size());
-                    }
 
                     for(Object skyeyeWebFlowLogByteArrayElement : pbBytesWebFlowLogList){
                         byte[] skyeyeWebFlowLogByteArrayElementBytes = (byte[]) skyeyeWebFlowLogByteArrayElement;
@@ -148,12 +144,12 @@ public class KafkaConsumerManager implements Runnable{
                             Map<String, Object> skyeyeWebFlowLog = JsonUtils.jsonToMap(skyeyeWebFlowLogStr);
                             if (null != skyeyeWebFlowLog ) {
                                 this.logNumber++ ;
-                                if(SystemConstants.DEBUG.equals("true")){
-                                    System.out.println(skyeyeWebFlowLog.toString());
-                                    System.out.println(SystemConstants.MARKED_FIELD  +  "   " + SystemConstants.MARKED_VALUE);
-                                }
                                 if(skyeyeWebFlowLog.get(SystemConstants.MARKED_FIELD).toString().equals(SystemConstants.MARKED_VALUE)){
                                     this.markedNumber++;
+                                    //统计 pb length
+                                    if(SystemConstants.DEBUG.equals("true")){
+                                        System.out.println(this.topic + " marked log +1, the marked field "+ SystemConstants.MARKED_FIELD  +  "  and the marked value " + SystemConstants.MARKED_VALUE );
+                                    }
                                 }
 
                             }
