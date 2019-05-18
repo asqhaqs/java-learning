@@ -15,10 +15,6 @@ public class kafkaConsumerForCount {
             consumer1.start();
         }
 
-//        KafkaConsumerManager consumerManager = new KafkaConsumerManager(topicList[0], methodList[0], SystemConstants.END_TIME);
-//        Thread consumer1 = new Thread(consumerManager);
-//        consumer1.start();
-
 
     }
 }

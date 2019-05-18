@@ -46,12 +46,12 @@ public class KafkaConsumerManager implements Runnable{
 
     private Integer logNumber = 0;
     private Integer markedNumber = 0;
+    private Integer wrongNumber = 0;
     private Date endtime;
 
     private byte[] skyeyeWebFlowLogByteArrayElementBytesDest = null;
 
     public KafkaConsumerManager(String topic, String method, String endtime){
-//        logger.warn(String.format("[info: init KafkaConsumerManager[%s]]", topic));
         System.out.println(String.format("[info: init KafkaConsumerManager[%s]]", topic));
         this.topic = topic;
         this.consumer = new KafkaConsumer<String, Object>(createConsumerConfig());
@@ -73,7 +73,8 @@ public class KafkaConsumerManager implements Runnable{
 
     public Integer showNumber(){
         System.out.println("the logNumber of topic " + this.topic + " before time " + this.endtime + " in "+ Thread.currentThread() + "is: " + this.logNumber);
-        System.out.println("the markedNumber is: " + this.markedNumber);
+        System.out.println("the markedNumber of topic " + this.topic + " is: " + this.markedNumber +
+                ". and error message number is: " + this.wrongNumber);
         return this.logNumber;
     }
 
@@ -110,50 +111,54 @@ public class KafkaConsumerManager implements Runnable{
         try{
             this.consumer.subscribe(Arrays.asList(topic));
             SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-            System.out.println("consumer topic: " + topic +"start time is: " + df.format(new Date()));
+            System.out.println("consumer topic: " + topic + " start time is: " + df.format(new Date()));
             while (true) {
                 ConsumerRecords<String, Object> records = consumer.poll(100);
                 for(ConsumerRecord<String, Object> record : records){
+                    try{
+                        byte[] skyeyeWebFlowLogByteArray = (byte[]) record.value();
+                        List<Object> pbBytesWebFlowLogList = webFlowLogGatherMsgCoder.fromWire(skyeyeWebFlowLogByteArray);
 
-                    byte[] skyeyeWebFlowLogByteArray = (byte[]) record.value();
-                    List<Object> pbBytesWebFlowLogList = webFlowLogGatherMsgCoder.fromWire(skyeyeWebFlowLogByteArray);
+                        for(Object skyeyeWebFlowLogByteArrayElement : pbBytesWebFlowLogList){
+                            byte[] skyeyeWebFlowLogByteArrayElementBytes = (byte[]) skyeyeWebFlowLogByteArrayElement;
 
+                            // 加密解密
+                            if (isWebflowLogEncrypt) {
+                                int decryptBytesLength = aESUtil.decrypt(skyeyeWebFlowLogByteArrayElementBytes,
+                                        skyeyeWebFlowLogByteArrayElementBytes.length,
+                                        skyeyeWebFlowLogByteArrayElementBytesDest);
 
-                    for(Object skyeyeWebFlowLogByteArrayElement : pbBytesWebFlowLogList){
-                        byte[] skyeyeWebFlowLogByteArrayElementBytes = (byte[]) skyeyeWebFlowLogByteArrayElement;
-
-                        // 加密解密
-                        if (isWebflowLogEncrypt) {
-                            int decryptBytesLength = aESUtil.decrypt(skyeyeWebFlowLogByteArrayElementBytes,
-                                    skyeyeWebFlowLogByteArrayElementBytes.length,
-                                    skyeyeWebFlowLogByteArrayElementBytesDest);
-
-                            if (decryptBytesLength < 0) {
-                                throw new RuntimeException("topic"+ this.topic +"AES decrpty error");
-                            }
-
-                            skyeyeWebFlowLogByteArrayElementBytes = subBytes(skyeyeWebFlowLogByteArrayElementBytesDest, 0, decryptBytesLength);
-                        }
-
-                        AddressBookProtosTDGYWA.SENSOR_LOG log = AddressBookProtosTDGYWA.SENSOR_LOG.parseFrom(skyeyeWebFlowLogByteArrayElementBytes);
-                        Object skyeyeWebFlowLogPB = getSkyeyeWebFlowLogObjectMethod.invoke(log);
-                        String skyeyeWebFlowLogStr = JsonFormatProtocolBuffer.printToString((Message) skyeyeWebFlowLogPB);
-
-                        // 查找统计相关的信息
-                        if (StringUtils.isNotBlank(skyeyeWebFlowLogStr)) {
-                            Map<String, Object> skyeyeWebFlowLog = JsonUtils.jsonToMap(skyeyeWebFlowLogStr);
-                            if (null != skyeyeWebFlowLog ) {
-                                this.logNumber++ ;
-                                if(skyeyeWebFlowLog.get(SystemConstants.MARKED_FIELD).toString().equals(SystemConstants.MARKED_VALUE)){
-                                    this.markedNumber++;
-                                    //统计 pb length
-                                    if(SystemConstants.DEBUG.equals("true")){
-                                        System.out.println(this.topic + " marked log +1, the marked field "+ SystemConstants.MARKED_FIELD  +  "  and the marked value " + SystemConstants.MARKED_VALUE );
-                                    }
+                                if (decryptBytesLength < 0) {
+                                    throw new RuntimeException("topic"+ this.topic +"AES decrpty error");
                                 }
 
+                                skyeyeWebFlowLogByteArrayElementBytes = subBytes(skyeyeWebFlowLogByteArrayElementBytesDest, 0, decryptBytesLength);
+                            }
+
+                            AddressBookProtosTDGYWA.SENSOR_LOG log = AddressBookProtosTDGYWA.SENSOR_LOG.parseFrom(skyeyeWebFlowLogByteArrayElementBytes);
+                            Object skyeyeWebFlowLogPB = getSkyeyeWebFlowLogObjectMethod.invoke(log);
+                            String skyeyeWebFlowLogStr = JsonFormatProtocolBuffer.printToString((Message) skyeyeWebFlowLogPB);
+
+                            // 查找统计相关的信息
+                            if (StringUtils.isNotBlank(skyeyeWebFlowLogStr)) {
+                                Map<String, Object> skyeyeWebFlowLog = JsonUtils.jsonToMap(skyeyeWebFlowLogStr);
+                                if (null != skyeyeWebFlowLog ) {
+                                    this.logNumber++ ;
+                                    if(skyeyeWebFlowLog.get(SystemConstants.MARKED_FIELD).toString().equals(SystemConstants.MARKED_VALUE)){
+                                        this.markedNumber++;
+                                        //统计 pb length
+                                        if(SystemConstants.DEBUG.equals("true")){
+                                            System.out.println(this.topic + " marked log +1, the marked field "+ SystemConstants.MARKED_FIELD  +  "  and the marked value " + SystemConstants.MARKED_VALUE );
+                                        }
+                                    }
+
+                                }
                             }
                         }
+                    }catch (Exception e){
+                        System.out.println("the topic " + this.topic + " message has error!!!");
+                        this.wrongNumber ++;
+                        e.printStackTrace();
                     }
                 }
                 consumer.commitSync();
