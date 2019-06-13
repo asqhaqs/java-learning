@@ -28,7 +28,7 @@ public class BST<Key extends Comparable<Key>, Value> {
         return size(root);
     }
 
-    public int size(Node node){
+    private int size(Node node){
         if( node == null )
             return 0;
         else
@@ -40,7 +40,7 @@ public class BST<Key extends Comparable<Key>, Value> {
         return get(root, key);
     }
 
-    public Value get(Node x, Key key){
+    private Value get(Node x, Key key){
         // 在以x为根节点的子树中查找并返回Key所对应的值
         // 如果找不到则返回null
         if(x == null)
@@ -59,7 +59,7 @@ public class BST<Key extends Comparable<Key>, Value> {
         put(root, key, value);
     }
 
-    public Node put(Node x, Key key, Value value){
+    private Node put(Node x, Key key, Value value){
         // 如果key 存在于 以 x 为根节点的子树中则更新它的值
         // 否则将以key 和 value 为键值对的新节点插入到该子树中
         if(x == null) return new Node(key, value, 1);
@@ -75,6 +75,40 @@ public class BST<Key extends Comparable<Key>, Value> {
         return x;
     }
 
-    // todo max()/ min()/ floor() / ceiling() / select() / rank() / delete() / deleteMin() / deleteMax() / keys()
+    public Key min(){
+        return min(root).key;
+    }
+
+    private Node min(Node x){
+        if(x.left == null){
+            return x;
+        }else {
+            return min(x.left);
+        }
+    }
+
+    public Key floor(Key key){
+        //小于等于 key 的 键值
+        Node floor_node = floor(root, key);
+        if(floor_node == null){
+            return null;
+        }else {
+            return floor_node.key;
+        }
+    }
+
+    private Node floor(Node x, Key key){
+        if( x == null ) return null;
+        int cmp = key.compareTo(x.key);
+        if( cmp == 0 ) return x;
+        else if( cmp < 0 ) return floor(x.left, key);
+        Node right_node = floor(x.right, key);
+        if( right_node == null ) return x;
+        else return right_node;
+    }
+
+
+
+    // todo max()/ ceiling() / select() / rank() / delete() / deleteMin() / deleteMax() / keys()
 
 }
