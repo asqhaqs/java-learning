@@ -30,8 +30,10 @@ public class KafkaConsumerManager implements Runnable{
     private KafkaConsumer<String, Object> consumer;
 
     // 加密解密
-    private final static boolean isWebflowLogEncrypt = (SystemConstants.WEBFLOW_LOG_ENCRYPT.equals("true")) ? true : false;
+    private final static boolean isWebflowLogEncrypt = (SystemConstants.WEBFLOW_LOG_ENCRYPT.equals("true"));
     private  static AESUtil aESUtil = null;
+
+    SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     static {
         aESUtil = new AESUtil();
@@ -51,7 +53,7 @@ public class KafkaConsumerManager implements Runnable{
     private byte[] skyeyeWebFlowLogByteArrayElementBytesDest = null;
 
     public KafkaConsumerManager(String topic, String method, String endtime){
-//        logger.warn(String.format("[info: init KafkaConsumerManager[%s]]", topic));
+
         System.out.println(String.format("[info: init KafkaConsumerManager[%s]]", topic));
         this.topic = topic;
         this.consumer = new KafkaConsumer<String, Object>(createConsumerConfig());
@@ -62,17 +64,11 @@ public class KafkaConsumerManager implements Runnable{
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
         }
-
-        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        try {
-            this.endtime = df.parse(endtime);
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
     }
 
     public Integer showNumber(){
-        System.out.println("the logNumber of topic " + this.topic + " before time " + this.endtime + " in "+ Thread.currentThread() + "is: " + this.logNumber);
+
+        System.out.println("at time " + this.df.format(new Date()) + " the logNumber of topic " + this.topic + " in "+ Thread.currentThread() + "is: " + this.logNumber);
         System.out.println("the markedNumber is: " + this.markedNumber);
         return this.logNumber;
     }
@@ -109,8 +105,7 @@ public class KafkaConsumerManager implements Runnable{
     public void run(){
         try{
             this.consumer.subscribe(Arrays.asList(topic));
-            SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-            System.out.println("consumer topic: " + topic +"start time is: " + df.format(new Date()));
+            System.out.println("consumer topic: " + topic +"start time is: " + this.df.format(new Date()));
             while (true) {
                 ConsumerRecords<String, Object> records = consumer.poll(100);
                 for(ConsumerRecord<String, Object> record : records){
@@ -147,6 +142,7 @@ public class KafkaConsumerManager implements Runnable{
                                     //统计
                                     if(SystemConstants.DEBUG.equals("true")){
                                         System.out.println(this.topic + " marked + 1: marked field is" + SystemConstants.MARKED_FIELD  +  "  and marked value is " + SystemConstants.MARKED_VALUE);
+                                        showNumber();
                                     }
                                     this.markedNumber++;
                                 }
@@ -156,17 +152,12 @@ public class KafkaConsumerManager implements Runnable{
                     }
                 }
                 consumer.commitSync();
-                Date nowdate = new Date();
-                int va = nowdate.compareTo(endtime);
-                if(va > 0){
-                    System.out.println("consumer topic: " + topic +"end time is: " + df.format(nowdate));
-                    showNumber();
-                    break;
-                }
             }
-            consumer.close();
+
         }catch (Exception e){
             e.printStackTrace();
+        }finally {
+            consumer.close();
         }
     }
 }

@@ -15,7 +15,7 @@ public class SystemConstants extends ConfigurableContants {
     static {
         logger.info("init");
         // init("/app.properties");
-        init("/home/storm/test/ceshi.properties");
+        init("/opt/work/test/ceshi.properties");
     }
 
     public static final String ZOOKEEPER_HOSTS = getProperty("zookeeper_hosts", "m1.gycs.bigdata01.cn:2181,m2.gycs.bigdata01.cn:2181,m3.gycs.bigdata01.cn:2181");
@@ -23,7 +23,7 @@ public class SystemConstants extends ConfigurableContants {
 
     public static final String KAFKA_SPOUT_THREADS = getProperty("kafka_spout_threads", "5");
 
-    public static final String FILE_PATH = getProperty("file_path", "/home/storm/geoipdata");
+    public static final String FILE_PATH = getProperty("file_path", "/opt/work/test");
     // debug
     public static final String DEBUG = getProperty("debug", "true");
 
@@ -31,13 +31,10 @@ public class SystemConstants extends ConfigurableContants {
     public static final String WEBFLOW_LOG_ENCRYPT = getProperty("encrypt", "true");
     public static final String WEBFLOW_LOG_ENCRYPT_BUFFER_SIZE = getProperty("encrypt_buffer_size", "100000");
 
-    // nest record: Record--Array--Record
-    public static final String RECORD_ARRAY_RECORD = getProperty("record_array_record", "skyeye_ssl:cert,skyeye_mail:attachment");
-
 
     // Kerberos 授权&认证
     public static final String IS_KERBEROS = getProperty("is_kerberos", "true");
-    public static final String KAFKA_KERBEROS_PATH = getProperty("kafka_kerberos_path", "/home/storm/geoipdata");
+    public static final String KAFKA_KERBEROS_PATH = getProperty("kafka_kerberos_path", "/opt/work/test");
     static {
         if (SystemConstants.IS_KERBEROS.equals("true")) {
             System.setProperty("java.security.auth.login.config",
