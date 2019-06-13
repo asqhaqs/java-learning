@@ -107,8 +107,60 @@ public class BST<Key extends Comparable<Key>, Value> {
         else return right_node;
     }
 
+    public Key select(int k){
+        // 找到 二叉树中排名 k 的键
+        Node node = select(root, k);
+        if(node == null) return null;
+        else return node.key;
+    }
 
+    private Node select(Node x, int k){
+        if ( x == null ) return null;
+        int t = size(x.left);
+        if(t > k) return select(x.left, k);
+        else if(t < k) return select(x.right, k-t-1);
+        else return x;
+    }
 
-    // todo max()/ ceiling() / select() / rank() / delete() / deleteMin() / deleteMax() / keys()
+    public int rank(Key key){
+        // 返回以x为根节点的子树中键小于key的数量
+        return rank(key, root);
+    }
+
+    private int rank(Key key, Node x){
+        if(x == null) return 0;
+        int t = size(x.left);
+        int cmp = key.compareTo(x.key);
+        if(cmp < 0){
+            return rank(key, x.left);
+        }else if(cmp > 0){
+            return t+1+rank(key, x.right);
+        }else {
+            return t;
+        }
+    }
+
+    public void deleteMin(){
+        // 删除二叉树中键值最小的
+        root = deleteMin(root);
+    }
+
+    private Node deleteMin(Node x){
+        if(x.left == null) return x.right;
+        x.left =  deleteMin(x.left);
+        x.N = size(x.left) + size(x.right) + 1;
+        return x;
+    }
+
+    public void delete(Key key){
+        root =  delete(root, key);
+    }
+
+    private Node delete(Node x, Key key){
+
+        return x;
+    }
+
+    // todo max()/ ceiling() / delete() / deleteMin() / deleteMax() / keys()
 
 }
