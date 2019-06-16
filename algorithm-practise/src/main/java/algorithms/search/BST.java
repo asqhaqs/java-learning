@@ -155,9 +155,31 @@ public class BST<Key extends Comparable<Key>, Value> {
     public void delete(Key key){
         root =  delete(root, key);
     }
-
+    /**
+     * 删除 二叉查找树x中键值为key的节点， 当删除节点即为当前节点时候，
+     * 1. 将指向即将被删除的节点的链接保存为 t
+     * 2. 将x指向它的后继节点 min（t.right）即右子树的最小值
+     * 3. 将x的右链接（原本指向一棵所有节点都大于x.key的二叉查找树）指向 deleteMin(t.right),
+     * 也就是在删除后所有结点仍然都大于x.key的子二叉查找树
+     * 4. 将x 的左链接设为 t.left (其下所有的键都小于被删除的结点和它的后续节点)
+     * @param x
+     * @param key
+     * @return
+     */
     private Node delete(Node x, Key key){
-
+        if( x == null ) return null;
+        int cmp = key.compareTo(x.key);
+        if( cmp < 0 ) x.left = delete(x.left, key);
+        if( cmp > 0 ) x.right = delete(x.right, key);
+        else {
+            if( x.right == null ) return x.left;
+            if( x.left == null ) return x.right;
+            Node t = x;
+            x = min(t.right);
+            x.right = deleteMin(t);
+            x.left = t.left;
+        }
+        x.N = size(x.left) + size(x.right) + 1;
         return x;
     }
 
