@@ -30,8 +30,10 @@ public class KafkaConsumerManager implements Runnable{
     private KafkaConsumer<String, Object> consumer;
 
     // 加密解密
-    private final static boolean isWebflowLogEncrypt = (SystemConstants.WEBFLOW_LOG_ENCRYPT.equals("true")) ? true : false;
+    private final static boolean isWebflowLogEncrypt = (SystemConstants.WEBFLOW_LOG_ENCRYPT.equals("true"));
     private  static AESUtil aESUtil = null;
+
+    SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     static {
         aESUtil = new AESUtil();
@@ -46,12 +48,12 @@ public class KafkaConsumerManager implements Runnable{
 
     private Integer logNumber = 0;
     private Integer markedNumber = 0;
-    private Integer wrongNumber = 0;
     private Date endtime;
 
     private byte[] skyeyeWebFlowLogByteArrayElementBytesDest = null;
 
     public KafkaConsumerManager(String topic, String method, String endtime){
+
         System.out.println(String.format("[info: init KafkaConsumerManager[%s]]", topic));
         this.topic = topic;
         this.consumer = new KafkaConsumer<String, Object>(createConsumerConfig());
@@ -62,19 +64,12 @@ public class KafkaConsumerManager implements Runnable{
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
         }
-
-        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        try {
-            this.endtime = df.parse(endtime);
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
     }
 
     public Integer showNumber(){
-        System.out.println("the logNumber of topic " + this.topic + " before time " + this.endtime + " in "+ Thread.currentThread() + "is: " + this.logNumber);
-        System.out.println("the markedNumber of topic " + this.topic + " is: " + this.markedNumber +
-                ". and error message number is: " + this.wrongNumber);
+
+        System.out.println("at time " + this.df.format(new Date()) + " the logNumber of topic " + this.topic + " in "+ Thread.currentThread() + "is: " + this.logNumber);
+        System.out.println("the markedNumber is: " + this.markedNumber);
         return this.logNumber;
     }
 
@@ -110,69 +105,59 @@ public class KafkaConsumerManager implements Runnable{
     public void run(){
         try{
             this.consumer.subscribe(Arrays.asList(topic));
-            SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-            System.out.println("consumer topic: " + topic + " start time is: " + df.format(new Date()));
+            System.out.println("consumer topic: " + topic +"start time is: " + this.df.format(new Date()));
             while (true) {
                 ConsumerRecords<String, Object> records = consumer.poll(100);
                 for(ConsumerRecord<String, Object> record : records){
-                    try{
-                        byte[] skyeyeWebFlowLogByteArray = (byte[]) record.value();
-                        List<Object> pbBytesWebFlowLogList = webFlowLogGatherMsgCoder.fromWire(skyeyeWebFlowLogByteArray);
 
-                        for(Object skyeyeWebFlowLogByteArrayElement : pbBytesWebFlowLogList){
-                            byte[] skyeyeWebFlowLogByteArrayElementBytes = (byte[]) skyeyeWebFlowLogByteArrayElement;
+                    byte[] skyeyeWebFlowLogByteArray = (byte[]) record.value();
+                    List<Object> pbBytesWebFlowLogList = webFlowLogGatherMsgCoder.fromWire(skyeyeWebFlowLogByteArray);
 
-                            // 加密解密
-                            if (isWebflowLogEncrypt) {
-                                int decryptBytesLength = aESUtil.decrypt(skyeyeWebFlowLogByteArrayElementBytes,
-                                        skyeyeWebFlowLogByteArrayElementBytes.length,
-                                        skyeyeWebFlowLogByteArrayElementBytesDest);
+                    for(Object skyeyeWebFlowLogByteArrayElement : pbBytesWebFlowLogList){
+                        byte[] skyeyeWebFlowLogByteArrayElementBytes = (byte[]) skyeyeWebFlowLogByteArrayElement;
 
-                                if (decryptBytesLength < 0) {
-                                    throw new RuntimeException("topic"+ this.topic +"AES decrpty error");
-                                }
+                        // 加密解密
+                        if (isWebflowLogEncrypt) {
+                            int decryptBytesLength = aESUtil.decrypt(skyeyeWebFlowLogByteArrayElementBytes,
+                                    skyeyeWebFlowLogByteArrayElementBytes.length,
+                                    skyeyeWebFlowLogByteArrayElementBytesDest);
 
-                                skyeyeWebFlowLogByteArrayElementBytes = subBytes(skyeyeWebFlowLogByteArrayElementBytesDest, 0, decryptBytesLength);
+                            if (decryptBytesLength < 0) {
+                                throw new RuntimeException("topic"+ this.topic +"AES decrpty error");
                             }
 
-                            AddressBookProtosTDGYWA.SENSOR_LOG log = AddressBookProtosTDGYWA.SENSOR_LOG.parseFrom(skyeyeWebFlowLogByteArrayElementBytes);
-                            Object skyeyeWebFlowLogPB = getSkyeyeWebFlowLogObjectMethod.invoke(log);
-                            String skyeyeWebFlowLogStr = JsonFormatProtocolBuffer.printToString((Message) skyeyeWebFlowLogPB);
+                            skyeyeWebFlowLogByteArrayElementBytes = subBytes(skyeyeWebFlowLogByteArrayElementBytesDest, 0, decryptBytesLength);
+                        }
 
-                            // 查找统计相关的信息
-                            if (StringUtils.isNotBlank(skyeyeWebFlowLogStr)) {
-                                Map<String, Object> skyeyeWebFlowLog = JsonUtils.jsonToMap(skyeyeWebFlowLogStr);
-                                if (null != skyeyeWebFlowLog ) {
-                                    this.logNumber++ ;
-                                    if(skyeyeWebFlowLog.get(SystemConstants.MARKED_FIELD).toString().equals(SystemConstants.MARKED_VALUE)){
-                                        this.markedNumber++;
-                                        //统计 pb length
-                                        if(SystemConstants.DEBUG.equals("true")){
-                                            System.out.println(this.topic + " marked log +1, the marked field "+ SystemConstants.MARKED_FIELD  +  "  and the marked value " + SystemConstants.MARKED_VALUE );
-                                        }
+                        AddressBookProtosTDGYWA.SENSOR_LOG log = AddressBookProtosTDGYWA.SENSOR_LOG.parseFrom(skyeyeWebFlowLogByteArrayElementBytes);
+                        Object skyeyeWebFlowLogPB = getSkyeyeWebFlowLogObjectMethod.invoke(log);
+                        String skyeyeWebFlowLogStr = JsonFormatProtocolBuffer.printToString((Message) skyeyeWebFlowLogPB);
+
+                        // 查找统计相关的信息
+                        if (StringUtils.isNotBlank(skyeyeWebFlowLogStr)) {
+                            Map<String, Object> skyeyeWebFlowLog = JsonUtils.jsonToMap(skyeyeWebFlowLogStr);
+                            if (null != skyeyeWebFlowLog ) {
+                                this.logNumber++ ;
+                                if(skyeyeWebFlowLog.get(SystemConstants.MARKED_FIELD).toString().equals(SystemConstants.MARKED_VALUE)){
+                                    //统计
+                                    if(SystemConstants.DEBUG.equals("true")){
+                                        System.out.println(this.topic + " marked + 1: marked field is" + SystemConstants.MARKED_FIELD  +  "  and marked value is " + SystemConstants.MARKED_VALUE);
+                                        showNumber();
                                     }
-
+                                    this.markedNumber++;
                                 }
+
                             }
                         }
-                    }catch (Exception e){
-                        System.out.println("the topic " + this.topic + " message has error!!!");
-                        this.wrongNumber ++;
-                        e.printStackTrace();
                     }
                 }
                 consumer.commitSync();
-                Date nowdate = new Date();
-                int va = nowdate.compareTo(endtime);
-                if(va > 0){
-                    System.out.println("consumer topic: " + topic +"end time is: " + df.format(nowdate));
-                    showNumber();
-                    break;
-                }
             }
-            consumer.close();
+
         }catch (Exception e){
             e.printStackTrace();
+        }finally {
+            consumer.close();
         }
     }
 }
