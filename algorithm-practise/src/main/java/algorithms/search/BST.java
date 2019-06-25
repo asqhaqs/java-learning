@@ -240,6 +240,4 @@ public class BST<Key extends Comparable<Key>, Value> {
         }
     }
 
-    // todo max()/ ceiling() / delete() / deleteMin() / deleteMax() / keys()
-
 }
