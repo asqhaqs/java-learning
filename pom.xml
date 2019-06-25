@@ -54,6 +54,7 @@
         <module>java-jvm</module>
         <module>algorithm-practise</module>
         <module>kafkaConsumerForCount</module>
+        <module>rpc-provider</module>
     </modules>
 
     <dependencyManagement>
