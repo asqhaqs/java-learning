@@ -1,6 +1,6 @@
-package service;
+package service.impl;
 
-import service.impl.BatterCakeService;
+import service.BatterCakeService;
 
 /**
  * Create by xudong
