@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <bean id="message"
+          class="org.springbyexample.di.xml.DefaultMessage" />
+
+    <!-- 构造注入 -->
+    <bean id="cons_message" class="org.springbyexample.di.xml.ConstructorMessage">
+        <constructor-arg value="spring is suck"/>
+    </bean>
+
+    <bean id="springMessage" class="java.lang.String">
+        <constructor-arg value="spring is suck"/>
+    </bean>
+
+    <!-- setter 注入 -->
+    <bean id="setter_message" class="org.springbyexample.di.xml.SetterMessage">
+        <!--<property name="message" value="spring is funny" />-->
+        <property name="message" ref="springMessage" />
+    </bean>
+
+</beans>

@@ -20,6 +20,8 @@
 
     <description>
         Java学习笔记，主要是对一些基础特性和编程细节进行总结整理。包含示例源码，涉及反射，代理，集合，IO，多线程等。
+
+        增加了一些关于算法，rpc调用， spring内容的一些示例 -----by xudong
     </description>
     <url>https://github.com/brianway/java-learning/</url>
 
@@ -57,6 +59,7 @@
         <module>rpc-provider</module>
         <module>rpc-consumer</module>
         <module>guava-test</module>
+        <module>spring-core-example</module>
     </modules>
 
     <dependencyManagement>
