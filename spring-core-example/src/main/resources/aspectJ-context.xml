@@ -9,6 +9,6 @@
 
     <context:load-time-weaver />
 
-    <bean id="processor" class="org.springbyexample.aspectjLoadTimeWeaving.Processor" />
+    <bean id="processer" class="org.springbyexample.aspectjLoadTimeWeaving.Processer" />
 
 </beans>
