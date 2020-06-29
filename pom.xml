@@ -60,6 +60,7 @@
         <module>rpc-consumer</module>
         <module>guava-test</module>
         <module>spring-core-example</module>
+        <module>transforer</module>
     </modules>
 
     <dependencyManagement>
