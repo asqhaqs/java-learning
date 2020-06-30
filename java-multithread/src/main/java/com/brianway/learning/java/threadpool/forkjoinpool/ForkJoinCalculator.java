@@ -62,10 +62,22 @@ public class ForkJoinCalculator implements Calculator{
 
 
     public static void main(String[] args) {
+        ForkJoinCalculator fjc = new ForkJoinCalculator();
+        long[] numbers = LongStream.rangeClosed(1, 10000000).toArray();
         Instant start = Instant.now();
-        long result = LongStream.rangeClosed(0, 10000000L).parallel().reduce(0, Long::sum);
+        long result1 = fjc.sunUp(numbers);
         Instant end = Instant.now();
         System.out.println("耗时：" + Duration.between(start, end).toMillis() + "ms");
+        System.out.println("结果为：" + result1);
+
+
+
+
+
+        Instant start1 = Instant.now();
+        long result = LongStream.rangeClosed(0, 10000000L).parallel().reduce(0, Long::sum);
+        Instant end1 = Instant.now();
+        System.out.println("耗时：" + Duration.between(start1, end1).toMillis() + "ms");
         System.out.println("结果为：" + result);
     }
 
