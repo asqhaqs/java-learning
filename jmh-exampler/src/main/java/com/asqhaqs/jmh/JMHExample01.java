@@ -42,9 +42,25 @@ public class JMHExample01 {
         return this.linkedList;
     }
 
+    /**
+     * 抽样测试
+     * @throws InterruptedException
+     */
     @BenchmarkMode(Mode.SampleTime)
     @Benchmark
     public void testSampleTime() throws InterruptedException{
+        TimeUnit.MILLISECONDS.sleep(1);
+    }
+
+    /**
+     * 冷启动测试
+     * @param
+     * @throws RunnerException
+     */
+    @BenchmarkMode(Mode.SingleShotTime)
+    @Warmup(iterations = 0)
+    @Benchmark
+    public void testSingleShotTime() throws InterruptedException {
         TimeUnit.MILLISECONDS.sleep(1);
     }
 
