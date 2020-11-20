@@ -42,6 +42,12 @@ public class JMHExample01 {
         return this.linkedList;
     }
 
+    @BenchmarkMode(Mode.SampleTime)
+    @Benchmark
+    public void testSampleTime() throws InterruptedException{
+        TimeUnit.MILLISECONDS.sleep(1);
+    }
+
     public static void main(String[] args) throws RunnerException {
         final Options opts = new OptionsBuilder().include(JMHExample01.class.getSimpleName())
                 .forks(1)
