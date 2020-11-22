@@ -35,7 +35,7 @@ public class JMHExample12 {
         log(PI);
     }
 
-    //
+    //test
     public static void main(String[] args) throws RunnerException {
         final Options opts = new OptionsBuilder().include(JMHExample12.class.getSimpleName()).build();
         new Runner(opts).run();
