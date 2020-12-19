@@ -33,6 +33,7 @@ public class JMHExample19 {
         this.queue.put(VALUE);
     }
 
+
     @GroupThreads(5)
     @Group("blockingQueue")
     @Benchmark
