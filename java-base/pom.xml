@@ -30,6 +30,18 @@
             <version>28.1-jre</version>
         </dependency>
 
+        <dependency>
+            <groupId>com.github.phantomthief</groupId>
+            <artifactId>more-lambdas</artifactId>
+            <version>0.1.55</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>1.7.30-kwai-2</version>
+        </dependency>
+
     </dependencies>
 
 </project>
